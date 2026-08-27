@@ -19,7 +19,7 @@ it('binds the browser factory as a singleton', function (): void {
 it('merges the default driver configuration', function (): void {
     expect(config('traverse'))
         ->toMatchArray([
-            'driver' => 'lightpanda',
+            'default' => 'lightpanda',
             'drivers' => [
                 'lightpanda' => [
                     'driver' => 'lightpanda',
@@ -63,7 +63,7 @@ it('resolves a custom driver configured as the default', function (): void {
     $factory = app(Factory::class);
     $factory->extend('custom', fn () => $browser);
 
-    config()->set('traverse.driver', 'custom');
+    config()->set('traverse.default', 'custom');
 
     expect($factory->browser())->toBe($browser);
 });

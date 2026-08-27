@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'driver' => env('TRAVERSE_DRIVER', 'lightpanda'),
+    'default' => env('TRAVERSE_DRIVER', 'lightpanda'),
 
     'drivers' => [
         'lightpanda' => [

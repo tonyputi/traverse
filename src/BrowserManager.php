@@ -29,7 +29,7 @@ final class BrowserManager extends Manager implements Factory
 
     public function getDefaultDriver(): string
     {
-        return $this->config->get('traverse.driver', 'lightpanda');
+        return $this->config->get('traverse.default', 'lightpanda');
     }
 
     protected function createDriver($driver)
