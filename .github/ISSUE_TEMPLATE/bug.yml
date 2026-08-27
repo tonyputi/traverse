@@ -1,0 +1,44 @@
+name: Bug report
+description: Report broken or unexpected Traverse behavior
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Minimal steps to reproduce
+      value: |
+        1.
+        2.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include PHP, Laravel, Traverse, and driver versions where applicable.
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Proposed validation
+      description: Describe the test or check that would demonstrate the fix.
+    validations:
+      required: true
