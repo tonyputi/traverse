@@ -17,7 +17,7 @@ Traverse uses trunk-based development: `main` is the only long-lived branch.
 - Create one short-lived branch and one focused pull request per issue.
 - Use a kebab-case branch named `{type}/{slug}`, such as `feature/lightpanda-driver`,
   `bugfix/process-timeout`, or `chore/tooling`.
-- Use Conventional Commit messages: `feat:`, `fix:`, `docs:`, `refactor:`, or `chore:`.
+- Use Conventional Commit messages: `feat:`, `fix:`, `docs:`, `refactor:`, or `chore:`. Semantic Release uses `feat:` and `fix:` commits on `main` to determine package versions.
 - Keep tests and documentation with observable behavior changes.
 - Do not introduce speculative public APIs or browser capabilities that a driver does
   not provide natively.

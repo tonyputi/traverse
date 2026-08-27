@@ -10,7 +10,8 @@ Preserve a small Laravel-first public API and compact, token-efficient represent
 
 - Work from a GitHub issue: one issue, one short-lived branch, and one focused PR.
 - Name branches by concern, such as `feat/lightpanda-driver` or `chore/package-bootstrap`.
-- Do not merge PRs or close issues autonomously.
+- Use Conventional Commit messages; `feat:` and `fix:` drive semantic releases.
+- Do not merge PRs, create release tags, or close issues autonomously.
 - Keep all repository-facing content in English.
 - Before material Laravel or Lightpanda decisions, consult their current official documentation.
 - Do not invent or document public APIs before their behavior exists.
