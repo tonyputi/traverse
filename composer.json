@@ -1,0 +1,62 @@
+{
+    "name": "tonyputi/traverse",
+    "description": "AI-native web browsing for Laravel.",
+    "keywords": [
+        "laravel",
+        "ai",
+        "browsing",
+        "lightpanda"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Filippo Sallemi"
+        }
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^12.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.24",
+        "orchestra/testbench": "^10.0",
+        "pestphp/pest": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "TonyPuti\\Traverse\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TonyPuti\\Traverse\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "TonyPuti\\Traverse\\TraverseServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "format": "pint",
+        "lint": "pint --test",
+        "validate-composer": "@composer validate --strict",
+        "ci": [
+            "@validate-composer",
+            "@lint",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
