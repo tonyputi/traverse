@@ -54,7 +54,7 @@ The V0.1 implementation plan is tracked in [issue #10](https://github.com/tonypu
 
 ## Contributing
 
-Contributions should be focused on a GitHub issue and submitted as one short-lived branch and one pull request. Read [AGENTS.md](AGENTS.md) for the contributor workflow and project constraints.
+Contributions should be focused on a GitHub issue and submitted as one short-lived branch and one pull request. Read the [contributing guide](.github/CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) for the contributor workflow and project constraints.
 
 ## License
 

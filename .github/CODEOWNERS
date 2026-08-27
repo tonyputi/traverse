@@ -1,0 +1,11 @@
+# All changes require maintainer review. Agents may open PRs but never merge them.
+* @tonyputi
+
+# Contributor instructions and repository automation.
+/AGENTS.md @tonyputi
+/.github/ @tonyputi
+
+# Project documentation.
+/README.md @tonyputi
+/CONTRIBUTORS.md @tonyputi
+/docs/ @tonyputi
