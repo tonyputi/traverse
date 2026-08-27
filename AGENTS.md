@@ -20,7 +20,10 @@ Preserve a small Laravel-first public API and compact, token-efficient represent
 ## Implementation
 
 - Prefer Laravel conventions, dependency injection, and explicit capability boundaries.
+- Driver pluggability follows the `Illuminate\Support\Manager` idiom (`BrowserManager`, `extend()`, and `create{Studly}Driver`).
+- Keep contracts tiny; introduce a dedicated capability interface only when a real feature requires it.
 - Keep transports such as CLI, MCP, and CDP below the primary browser abstraction.
+- Agent-facing tool names use the `traverse-` kebab-case prefix.
 - Avoid speculative abstractions, aliases, and compatibility layers.
 - Use Pest for tests.
 
