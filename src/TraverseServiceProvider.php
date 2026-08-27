@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace TonyPuti\Traverse;
+namespace Tonyputi\Traverse;
 
 use Illuminate\Support\ServiceProvider;
 

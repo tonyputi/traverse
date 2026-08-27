@@ -25,18 +25,18 @@
     },
     "autoload": {
         "psr-4": {
-            "TonyPuti\\Traverse\\": "src/"
+            "Tonyputi\\Traverse\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "TonyPuti\\Traverse\\Tests\\": "tests/"
+            "Tonyputi\\Traverse\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "TonyPuti\\Traverse\\TraverseServiceProvider"
+                "Tonyputi\\Traverse\\TraverseServiceProvider"
             ]
         }
     },

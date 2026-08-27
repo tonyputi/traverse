@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use TonyPuti\Traverse\TraverseServiceProvider;
+use Tonyputi\Traverse\TraverseServiceProvider;
 
 it('boots its service provider in Laravel', function (): void {
     expect(app()->getProvider(TraverseServiceProvider::class))->not->toBeNull();

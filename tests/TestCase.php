@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace TonyPuti\Traverse\Tests;
+namespace Tonyputi\Traverse\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
-use TonyPuti\Traverse\TraverseServiceProvider;
+use Tonyputi\Traverse\TraverseServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
