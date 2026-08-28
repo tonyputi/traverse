@@ -22,6 +22,7 @@
         "illuminate/support": "^12.0"
     },
     "require-dev": {
+        "larastan/larastan": "^3.0",
         "laravel/pint": "^1.24",
         "orchestra/testbench": "^10.0",
         "pestphp/pest": "^4.0",
@@ -48,10 +49,12 @@
         "test": "pest",
         "format": "pint",
         "lint": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=1G",
         "validate-composer": "@composer validate --strict",
         "ci": [
             "@validate-composer",
             "@lint",
+            "@analyse",
             "@test"
         ]
     },

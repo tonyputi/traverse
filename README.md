@@ -23,7 +23,7 @@ The intended focus is token-efficient, agent-friendly access to content such as 
 
 ## Requirements
 
-- PHP 8.3 or later
+- PHP 8.3 or later (CI-tested on PHP 8.3 and 8.4)
 - Laravel 12
 
 ## Public API
@@ -57,11 +57,12 @@ Available quality commands:
 ```bash
 composer validate --strict
 composer lint
+composer analyse
 composer test
 composer format
 ```
 
-Tests use [Pest](https://pestphp.com/) and Orchestra Testbench.
+Tests use [Pest](https://pestphp.com/) and Orchestra Testbench. Static analysis uses [Larastan](https://larastan.com/).
 
 ## Roadmap
 
