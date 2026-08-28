@@ -30,7 +30,7 @@ it('merges the default driver configuration', function (): void {
         ]);
 });
 
-it('resolves a custom driver configured as the default', function (): void {
+it('uses an application configuration override for the default driver', function (): void {
     $browser = new class implements Browser
     {
         public function visit(string $url): Page

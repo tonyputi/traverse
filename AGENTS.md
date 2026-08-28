@@ -22,6 +22,9 @@ Preserve a small Laravel-first public API and compact, token-efficient represent
 - Prefer Laravel conventions, dependency injection, and explicit capability boundaries.
 - Driver pluggability follows the `Illuminate\Support\Manager` idiom (`BrowserManager`, `extend()`, and `create{Studly}Driver`).
 - Keep contracts tiny; introduce a dedicated capability interface only when a real feature requires it.
+- `register()` holds bindings and config merges only; console publishing and commands go in `boot()`.
+- Configuration publishes under the `traverse` / `traverse-config` vendor:publish tags.
+- Public API is the contracts, config keys, and publish tags documented in the README; treat them as released surface and change them only with a decision-level reason.
 - Keep transports such as CLI, MCP, and CDP below the primary browser abstraction.
 - Agent-facing tool names use the `traverse-` kebab-case prefix.
 - Avoid speculative abstractions, aliases, and compatibility layers.

@@ -15,4 +15,13 @@ final class TraverseServiceProvider extends ServiceProvider
 
         $this->app->singleton(Factory::class, BrowserManager::class);
     }
+
+    public function boot(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/traverse.php' => config_path('traverse.php'),
+            ], ['traverse', 'traverse-config']);
+        }
+    }
 }

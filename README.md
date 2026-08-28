@@ -6,7 +6,7 @@ Traverse will give Laravel applications and AI agents efficient, structured acce
 
 ## Status
 
-Traverse is in early development. This repository currently provides the Laravel package foundation only; browser operations and public browsing APIs have not been implemented yet.
+Traverse is in early development. This repository currently provides the Laravel package foundation and architecture contracts; browser operations require the forthcoming Lightpanda driver.
 
 ## Vision
 
@@ -25,6 +25,21 @@ The intended focus is token-efficient, agent-friendly access to content such as 
 
 - PHP 8.3 or later
 - Laravel 12
+
+## Public API
+
+The V0.x surface is deliberately small:
+
+- `Tonyputi\Traverse\Contracts\Factory` — `browser(?string $driver = null): Browser` (bound in the container)
+- `Tonyputi\Traverse\Contracts\Browser` — `visit(string $url): Page`
+- `Tonyputi\Traverse\Contracts\Page` — `markdown()`, `semanticTree()`, `interactiveElements()`, `structuredData()`
+- `config/traverse.php` — `default`, `drivers.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
+
+Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
+
+There is no facade in V0.x; resolve `Contracts\Factory` via dependency injection. Custom drivers are registered with `BrowserManager::extend()`, as in Laravel's manager packages.
+
+Before 1.0, breaking changes may land in minor releases and are always noted in the release notes.
 
 ## Development
 
@@ -50,7 +65,7 @@ Tests use [Pest](https://pestphp.com/) and Orchestra Testbench.
 
 ## Roadmap
 
-The V0.1 implementation plan is tracked in [issue #10](https://github.com/tonyputi/traverse/issues/10). The next work defines the browser architecture and aligns this foundation with Laravel package conventions before a Lightpanda driver is implemented.
+The implementation plan is tracked in [issue #10](https://github.com/tonyputi/traverse/issues/10). The next milestone is the Lightpanda driver, built on the architecture recorded in [ADR 0001](docs/adr/0001-v0.1-architecture.md).
 
 ## Contributing
 

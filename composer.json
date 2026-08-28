@@ -8,6 +8,10 @@
         "lightpanda"
     ],
     "license": "MIT",
+    "support": {
+        "issues": "https://github.com/tonyputi/traverse/issues",
+        "source": "https://github.com/tonyputi/traverse"
+    },
     "authors": [
         {
             "name": "Filippo Sallemi"
