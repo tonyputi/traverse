@@ -21,6 +21,7 @@ Preserve a small Laravel-first public API and compact, token-efficient represent
 
 - Prefer Laravel conventions, dependency injection, and explicit capability boundaries.
 - Driver pluggability follows the `Illuminate\Support\Manager` idiom (`BrowserManager`, `extend()`, and `create{Studly}Driver`).
+- Lightpanda is externally managed through `TRAVERSE_LIGHTPANDA_BINARY`; do not add binary downloading, redistribution, or an install command without an explicit licensing decision.
 - Keep contracts tiny; introduce a dedicated capability interface only when a real feature requires it.
 - `register()` holds bindings and config merges only; console publishing and commands go in `boot()`.
 - Configuration publishes under the `traverse` / `traverse-config` vendor:publish tags.

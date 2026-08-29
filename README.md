@@ -6,7 +6,7 @@ Traverse will give Laravel applications and AI agents efficient, structured acce
 
 ## Status
 
-Traverse is in early development. This repository currently provides the Laravel package foundation and architecture contracts; browser operations require the forthcoming Lightpanda driver.
+Traverse is in early development. It currently provides a Lightpanda driver for the package's read-only, AI-native page primitives.
 
 ## Vision
 
@@ -35,11 +35,31 @@ The V0.x surface is deliberately small:
 - `Tonyputi\Traverse\Contracts\Page` — `markdown()`, `semanticTree()`, `interactiveElements()`, `structuredData()`
 - `config/traverse.php` — `default`, `drivers.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
 
+Configure the externally managed Lightpanda executable before visiting a page. Traverse supports Lightpanda `>= 0.3.7` and `< 0.4.0`:
+
+```dotenv
+TRAVERSE_LIGHTPANDA_BINARY=/usr/local/bin/lightpanda
+```
+
+```php
+use Tonyputi\Traverse\Contracts\Factory;
+
+$page = app(Factory::class)->browser()->visit('https://example.com');
+
+$markdown = $page->markdown();
+```
+
+Traverse starts Lightpanda locally on an ephemeral loopback port and terminates it with the Laravel application. It does not install, download, or redistribute Lightpanda; deploy and configure the executable yourself.
+
 Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
 
 There is no facade in V0.x; resolve `Contracts\Factory` via dependency injection. Custom drivers are registered with `BrowserManager::extend()`, as in Laravel's manager packages.
 
 Before 1.0, breaking changes may land in minor releases and are always noted in the release notes.
+
+## Lightpanda licensing
+
+Lightpanda is an external dependency licensed by its authors under AGPL-3.0-only. Traverse is MIT-licensed and does not distribute Lightpanda. You are responsible for obtaining, deploying, and determining the appropriate license for the executable used by your application.
 
 ## Development
 

@@ -6,6 +6,8 @@ use Tonyputi\Traverse\BrowserManager;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
 use Tonyputi\Traverse\Contracts\Page;
+use Tonyputi\Traverse\Exceptions\LightpandaBinaryNotFound;
+use Tonyputi\Traverse\Lightpanda\LightpandaBrowser;
 
 it('binds the browser factory as a singleton', function (): void {
     $first = app(Factory::class);
@@ -17,17 +19,9 @@ it('binds the browser factory as a singleton', function (): void {
 });
 
 it('merges the default driver configuration', function (): void {
-    expect(config('traverse'))
-        ->toMatchArray([
-            'default' => 'lightpanda',
-            'drivers' => [
-                'lightpanda' => [
-                    'driver' => 'lightpanda',
-                    'binary' => null,
-                    'timeout' => 30,
-                ],
-            ],
-        ]);
+    expect(config('traverse.default'))->toBe('lightpanda')
+        ->and(config('traverse.drivers.lightpanda.driver'))->toBe('lightpanda')
+        ->and(config('traverse.drivers.lightpanda.timeout'))->toBe(30);
 });
 
 it('uses an application configuration override for the default driver', function (): void {
@@ -73,7 +67,14 @@ it('rejects an unknown driver', function (): void {
         ->toThrow(InvalidArgumentException::class, 'Driver [unknown] not supported.');
 });
 
-it('fails fast until the Lightpanda driver is implemented', function (): void {
-    expect(fn () => app(Factory::class)->browser('lightpanda'))
-        ->toThrow(InvalidArgumentException::class, 'Driver [lightpanda] is not available yet.');
+it('creates the Lightpanda driver', function (): void {
+    expect(app(Factory::class)->browser('lightpanda'))
+        ->toBeInstanceOf(LightpandaBrowser::class);
+});
+
+it('requires an externally managed Lightpanda binary when visiting a page', function (): void {
+    config()->set('traverse.drivers.lightpanda.binary', null);
+
+    expect(fn () => app(Factory::class)->browser('lightpanda')->visit('https://example.com'))
+        ->toThrow(LightpandaBinaryNotFound::class, 'TRAVERSE_LIGHTPANDA_BINARY');
 });

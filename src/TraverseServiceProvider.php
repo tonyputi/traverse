@@ -18,6 +18,14 @@ final class TraverseServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->app->terminating(function (): void {
+            $factory = $this->app->make(Factory::class);
+
+            if ($factory instanceof BrowserManager) {
+                $factory->terminate();
+            }
+        });
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/traverse.php' => config_path('traverse.php'),
