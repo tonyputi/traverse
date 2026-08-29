@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JavaScript-rendered fixture</title>
+</head>
+<body>
+    <main>
+        <p id="status">Loading fixture content…</p>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelector('#status').textContent = 'JavaScript rendered fixture content.';
+        });
+    </script>
+</body>
+</html>

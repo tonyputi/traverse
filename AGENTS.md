@@ -25,6 +25,7 @@ Preserve a small Laravel-first public API and compact, token-efficient represent
 - `register()` holds bindings and config merges only; console publishing and commands go in `boot()`.
 - Configuration publishes under the `traverse` / `traverse-config` vendor:publish tags.
 - Public API is the contracts, config keys, and publish tags documented in the README; treat them as released surface and change them only with a decision-level reason.
+- Browser and integration tests use local deterministic fixtures, never arbitrary public websites.
 - Keep transports such as CLI, MCP, and CDP below the primary browser abstraction.
 - Agent-facing tool names use the `traverse-` kebab-case prefix.
 - Avoid speculative abstractions, aliases, and compatibility layers.
@@ -37,5 +38,6 @@ Run the relevant checks before opening a PR:
 ```bash
 composer validate --strict
 composer lint
+composer analyse
 composer test
 ```

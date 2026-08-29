@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Forms fixture</title>
+</head>
+<body>
+    <main>
+        <h1>Forms fixture</h1>
+        <form action="/submit" method="post">
+            <label for="name">Name</label>
+            <input id="name" name="name" type="text">
+
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email">
+
+            <label>
+                <input name="updates" type="checkbox" value="yes">
+                Receive updates
+            </label>
+
+            <label for="topic">Topic</label>
+            <select id="topic" name="topic">
+                <option value="general">General</option>
+                <option value="support">Support</option>
+            </select>
+
+            <label for="message">Message</label>
+            <textarea id="message" name="message"></textarea>
+
+            <button type="submit">Send message</button>
+        </form>
+    </main>
+</body>
+</html>
