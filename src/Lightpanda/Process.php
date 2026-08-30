@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse\Lightpanda;
 
-use Symfony\Component\Process\Process as SymfonyProcess;
+use Illuminate\Process\Factory;
+use Illuminate\Process\InvokedProcess;
 use Tonyputi\Traverse\Exceptions\Lightpanda\BinaryNotFoundException;
 use Tonyputi\Traverse\Exceptions\Lightpanda\ProcessException;
 use Tonyputi\Traverse\Exceptions\Lightpanda\TimeoutException;
@@ -13,11 +14,12 @@ final class Process
 {
     private ?int $port = null;
 
-    private ?SymfonyProcess $process = null;
+    private ?InvokedProcess $process = null;
 
     public function __construct(
         private readonly ?string $binary,
         private readonly int $timeout,
+        private readonly Factory $processFactory,
     ) {}
 
     public function connect(): CdpConnection
@@ -30,7 +32,7 @@ final class Process
             try {
                 return CdpConnection::open($this->endpoint(), 1);
             } catch (ProcessException|TimeoutException) {
-                if (! $this->process?->isRunning()) {
+                if (! $this->process?->running()) {
                     throw $this->processFailed();
                 }
 
@@ -43,7 +45,7 @@ final class Process
 
     public function terminate(): void
     {
-        if ($this->process?->isRunning()) {
+        if ($this->process?->running()) {
             $this->process->stop(1);
         }
 
@@ -53,22 +55,23 @@ final class Process
 
     private function start(): void
     {
-        if ($this->process?->isRunning()) {
+        if ($this->process?->running()) {
             return;
         }
 
         $binary = $this->binary();
         $this->port = $this->allocatePort();
-        $this->process = new SymfonyProcess([
-            $binary,
-            'serve',
-            '--host',
-            '127.0.0.1',
-            '--port',
-            (string) $this->port,
-        ]);
-        $this->process->setTimeout(null);
-        $this->process->start();
+        $this->process = $this->processFactory
+            ->newPendingProcess()
+            ->forever()
+            ->start([
+                $binary,
+                'serve',
+                '--host',
+                '127.0.0.1',
+                '--port',
+                (string) $this->port,
+            ]);
     }
 
     private function binary(): string
@@ -126,15 +129,13 @@ final class Process
 
     private function processFailed(): ProcessException
     {
-        $diagnostics = trim($this->process?->getErrorOutput() ?? '');
+        $diagnostics = trim($this->process?->errorOutput() ?? '');
         $message = 'Lightpanda exited before its CDP server became available.';
 
         if ($diagnostics !== '') {
             $message .= sprintf(' Diagnostics: %s', $diagnostics);
         }
 
-        $exitCode = $this->process?->getExitCode();
-
-        return new ProcessException($message, is_int($exitCode) ? $exitCode : 0);
+        return new ProcessException($message);
     }
 }

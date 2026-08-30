@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse;
 
+use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 use LogicException;
@@ -63,6 +64,10 @@ final class BrowserManager extends Manager implements Factory
             throw new InvalidArgumentException('Lightpanda timeout configuration must be a positive integer.');
         }
 
-        return new LightpandaBrowser(new LightpandaProcess($binary, $timeout));
+        return new LightpandaBrowser(new LightpandaProcess(
+            $binary,
+            $timeout,
+            $this->container->make(ProcessFactory::class),
+        ));
     }
 }
