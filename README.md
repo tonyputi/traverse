@@ -33,6 +33,7 @@ The V0.x surface is deliberately small:
 - `Tonyputi\Traverse\Contracts\Factory` — `browser(?string $driver = null): Browser` (bound in the container)
 - `Tonyputi\Traverse\Contracts\Browser` — `visit(string $url): Page`
 - `Tonyputi\Traverse\Contracts\Page` — `markdown()`, `semanticTree()`, `interactiveElements()`, `structuredData()`
+- `Tonyputi\Traverse\Events\VisitStarted`, `VisitCompleted`, and `VisitFailed` — factory-resolved visit lifecycle events
 - `config/traverse.php` — `default`, `drivers.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
 
 Configure the externally managed Lightpanda executable before visiting a page. Traverse supports Lightpanda `>= 0.3.7` and `< 0.4.0`:
@@ -50,6 +51,26 @@ $markdown = $page->markdown();
 ```
 
 Traverse starts Lightpanda locally on an ephemeral loopback port and terminates it with the Laravel application. It does not install, download, or redistribute Lightpanda; deploy and configure the executable yourself.
+
+### Visit lifecycle events
+
+Every visit made through `Contracts\Factory` dispatches `VisitStarted` immediately before the driver is called, then either `VisitCompleted` after it returns a page or `VisitFailed` before its exception is rethrown. The events share an `invocationId` and include the requested URL, resolved driver, timestamp, and terminal duration in milliseconds. `VisitFailed` includes only the exception class, not the exception message or driver diagnostics.
+
+```php
+use Illuminate\Support\Facades\Event;
+use Tonyputi\Traverse\Events\VisitCompleted;
+
+Event::listen(VisitCompleted::class, function (VisitCompleted $visit): void {
+    logger()->info('Traverse visit completed.', [
+        'invocation_id' => $visit->invocationId,
+        'url' => $visit->url,
+        'driver' => $visit->driver,
+        'duration_ms' => $visit->durationInMilliseconds,
+    ]);
+});
+```
+
+Completed events do not contain a `Page`, Markdown, semantic data, cookies, headers, or process objects. Traverse does not broadcast these events, select a channel, or configure a queue. Applications that need real-time updates should map only the appropriate event metadata to their own authorized broadcast event. Use a queued listener, including `ShouldQueueAfterCommit` where appropriate, when event work must not run during the visit.
 
 Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
 
