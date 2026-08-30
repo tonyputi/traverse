@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 use LogicException;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
-use Tonyputi\Traverse\Contracts\TerminableBrowser;
 use Tonyputi\Traverse\Lightpanda\Browser as LightpandaBrowser;
 use Tonyputi\Traverse\Lightpanda\Process as LightpandaProcess;
 
@@ -36,10 +36,29 @@ final class BrowserManager extends Manager implements Factory
         return $this->config->get('traverse.default', 'lightpanda');
     }
 
+    protected function createDriver($driver): Browser
+    {
+        $browser = parent::createDriver($driver);
+
+        if (! $browser instanceof Browser) {
+            throw new LogicException(sprintf(
+                'Driver [%s] must implement [%s].',
+                $driver,
+                Browser::class,
+            ));
+        }
+
+        return new EventingBrowser(
+            $browser,
+            $driver,
+            $this->container->make(Dispatcher::class),
+        );
+    }
+
     public function terminate(): void
     {
         foreach ($this->drivers as $driver) {
-            if ($driver instanceof TerminableBrowser) {
+            if ($driver instanceof EventingBrowser) {
                 $driver->terminate();
             }
         }
