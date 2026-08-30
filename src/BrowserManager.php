@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse;
 
+use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 use LogicException;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
+use Tonyputi\Traverse\Contracts\TerminableBrowser;
+use Tonyputi\Traverse\Lightpanda\Browser as LightpandaBrowser;
+use Tonyputi\Traverse\Lightpanda\Process as LightpandaProcess;
 
 final class BrowserManager extends Manager implements Factory
 {
@@ -32,12 +36,38 @@ final class BrowserManager extends Manager implements Factory
         return $this->config->get('traverse.default', 'lightpanda');
     }
 
-    protected function createDriver($driver)
+    public function terminate(): void
     {
-        if ($driver === 'lightpanda' && ! array_key_exists($driver, $this->customCreators)) {
-            throw new InvalidArgumentException('Driver [lightpanda] is not available yet.');
+        foreach ($this->drivers as $driver) {
+            if ($driver instanceof TerminableBrowser) {
+                $driver->terminate();
+            }
+        }
+    }
+
+    protected function createLightpandaDriver(): Browser
+    {
+        $config = $this->config->get('traverse.drivers.lightpanda', []);
+
+        if (! is_array($config)) {
+            throw new InvalidArgumentException('Lightpanda driver configuration must be an array.');
         }
 
-        return parent::createDriver($driver);
+        $binary = $config['binary'] ?? null;
+        $timeout = $config['timeout'] ?? 30;
+
+        if ($binary !== null && ! is_string($binary)) {
+            throw new InvalidArgumentException('Lightpanda binary configuration must be a string or null.');
+        }
+
+        if (! is_int($timeout) || $timeout < 1) {
+            throw new InvalidArgumentException('Lightpanda timeout configuration must be a positive integer.');
+        }
+
+        return new LightpandaBrowser(new LightpandaProcess(
+            $binary,
+            $timeout,
+            $this->container->make(ProcessFactory::class),
+        ));
     }
 }
