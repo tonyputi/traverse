@@ -7,7 +7,7 @@ use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
 use Tonyputi\Traverse\Contracts\Page;
 use Tonyputi\Traverse\Exceptions\Lightpanda\BinaryNotFoundException;
-use Tonyputi\Traverse\Lightpanda\LightpandaBrowser;
+use Tonyputi\Traverse\Lightpanda\Browser as LightpandaBrowser;
 
 it('binds the browser factory as a singleton', function (): void {
     $first = app(Factory::class);

@@ -10,8 +10,8 @@ use LogicException;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
 use Tonyputi\Traverse\Contracts\TerminableBrowser;
-use Tonyputi\Traverse\Lightpanda\LightpandaBrowser;
-use Tonyputi\Traverse\Lightpanda\LightpandaProcess;
+use Tonyputi\Traverse\Lightpanda\Browser as LightpandaBrowser;
+use Tonyputi\Traverse\Lightpanda\Process as LightpandaProcess;
 
 final class BrowserManager extends Manager implements Factory
 {

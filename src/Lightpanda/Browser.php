@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse\Lightpanda;
 
-use Tonyputi\Traverse\Contracts\Page;
+use Tonyputi\Traverse\Contracts\Page as PageContract;
 use Tonyputi\Traverse\Contracts\TerminableBrowser;
 use Tonyputi\Traverse\Exceptions\Lightpanda\ProtocolException;
 
-final class LightpandaBrowser implements TerminableBrowser
+final class Browser implements TerminableBrowser
 {
     private const MINIMUM_VERSION = '0.3.7';
 
     private const NEXT_MINOR_VERSION = '0.4.0';
 
-    public function __construct(private readonly LightpandaProcess $process) {}
+    public function __construct(private readonly Process $process) {}
 
-    public function visit(string $url): Page
+    public function visit(string $url): PageContract
     {
         $connection = $this->process->connect();
         $targetId = null;
@@ -36,7 +36,7 @@ final class LightpandaBrowser implements TerminableBrowser
             $interactiveElements = $this->interactiveElementsResult($connection->call('LP.getInteractiveElements', sessionId: $sessionId));
             $structuredData = $this->arrayResult($connection->call('LP.getStructuredData', sessionId: $sessionId), 'structuredData', 'LP.getStructuredData');
 
-            return new LightpandaPage($markdown, $semanticTree, $interactiveElements, $structuredData);
+            return new Page($markdown, $semanticTree, $interactiveElements, $structuredData);
         } finally {
             if ($targetId !== null) {
                 try {

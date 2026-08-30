@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse\Lightpanda;
 
-use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Process as SymfonyProcess;
 use Tonyputi\Traverse\Exceptions\Lightpanda\BinaryNotFoundException;
 use Tonyputi\Traverse\Exceptions\Lightpanda\ProcessException;
 use Tonyputi\Traverse\Exceptions\Lightpanda\TimeoutException;
 
-final class LightpandaProcess
+final class Process
 {
     private ?int $port = null;
 
-    private ?Process $process = null;
+    private ?SymfonyProcess $process = null;
 
     public function __construct(
         private readonly ?string $binary,
@@ -59,7 +59,7 @@ final class LightpandaProcess
 
         $binary = $this->binary();
         $this->port = $this->allocatePort();
-        $this->process = new Process([
+        $this->process = new SymfonyProcess([
             $binary,
             'serve',
             '--host',

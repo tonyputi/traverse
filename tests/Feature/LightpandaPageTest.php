@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Tonyputi\Traverse\Lightpanda\LightpandaPage;
+use Tonyputi\Traverse\Lightpanda\Page as LightpandaPage;
 
 it('preserves the native Lightpanda page payloads', function (): void {
     $page = new LightpandaPage(

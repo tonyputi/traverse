@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse\Lightpanda;
 
-use Tonyputi\Traverse\Contracts\Page;
+use Tonyputi\Traverse\Contracts\Page as PageContract;
 
-final readonly class LightpandaPage implements Page
+final readonly class Page implements PageContract
 {
     /**
      * @param  array<string, mixed>  $semanticTree
