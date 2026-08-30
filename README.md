@@ -34,6 +34,7 @@ The V0.x surface is deliberately small:
 - `Tonyputi\Traverse\Contracts\Browser` — `visit(string $url): Page`
 - `Tonyputi\Traverse\Contracts\Page` — `markdown()`, `semanticTree()`, `interactiveElements()`, `structuredData()`
 - `Tonyputi\Traverse\Events\VisitStarted`, `VisitCompleted`, and `VisitFailed` — factory-resolved visit lifecycle events
+- `Tonyputi\Traverse\Ai\ReadPageTool` — optional Laravel AI `traverse-read` tool
 - `config/traverse.php` — `default`, `drivers.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
 
 Configure the externally managed Lightpanda executable before visiting a page. Traverse supports Lightpanda `>= 0.3.7` and `< 0.4.0`:
@@ -71,6 +72,29 @@ Event::listen(VisitCompleted::class, function (VisitCompleted $visit): void {
 ```
 
 Completed events do not contain a `Page`, Markdown, semantic data, cookies, headers, or process objects. Traverse does not broadcast these events, select a channel, or configure a queue. Applications that need real-time updates should map only the appropriate event metadata to their own authorized broadcast event. Use a queued listener, including `ShouldQueueAfterCommit` where appropriate, when event work must not run during the visit.
+
+### Laravel AI tools
+
+Laravel AI is optional. Install it only when an application needs to expose Traverse to a tool-capable agent:
+
+```bash
+composer require laravel/ai
+```
+
+Attach Traverse's `traverse-read` tool to an agent that implements Laravel AI's `HasTools` contract:
+
+```php
+use Tonyputi\Traverse\Ai\ReadPageTool;
+
+public function tools(): iterable
+{
+    return [app(ReadPageTool::class)];
+}
+```
+
+`traverse-read` accepts an absolute HTTP(S) `url`, an optional `format` (`markdown`, `semantic-tree`, `interactive-elements`, or `structured-data`), and an optional Markdown-only `max_characters` limit. Markdown defaults to 12,000 characters and reports whether it was truncated.
+
+Attaching `traverse-read` grants the agent the same outbound network reachability as the application. It validates URL syntax but does not provide an SSRF guarantee across DNS resolution or redirects. Apply egress controls appropriate to your deployment before attaching it to an untrusted agent.
 
 Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
 
