@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tonyputi\Traverse\Lightpanda;
 
 use Symfony\Component\Process\Process;
-use Tonyputi\Traverse\Exceptions\LightpandaBinaryNotFound;
-use Tonyputi\Traverse\Exceptions\LightpandaProcessException;
-use Tonyputi\Traverse\Exceptions\LightpandaTimeoutException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\BinaryNotFoundException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\ProcessException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\TimeoutException;
 
 final class LightpandaProcess
 {
@@ -29,7 +29,7 @@ final class LightpandaProcess
         while (microtime(true) < $deadline) {
             try {
                 return CdpConnection::open($this->endpoint(), 1);
-            } catch (LightpandaProcessException|LightpandaTimeoutException) {
+            } catch (ProcessException|TimeoutException) {
                 if (! $this->process?->isRunning()) {
                     throw $this->processFailed();
                 }
@@ -38,7 +38,7 @@ final class LightpandaProcess
             }
         }
 
-        throw new LightpandaTimeoutException(sprintf('Lightpanda did not start within %d seconds.', $this->timeout));
+        throw new TimeoutException(sprintf('Lightpanda did not start within %d seconds.', $this->timeout));
     }
 
     public function terminate(): void
@@ -74,11 +74,11 @@ final class LightpandaProcess
     private function binary(): string
     {
         if ($this->binary === null || $this->binary === '') {
-            throw new LightpandaBinaryNotFound('Lightpanda requires TRAVERSE_LIGHTPANDA_BINARY to point to an executable binary.');
+            throw new BinaryNotFoundException('Lightpanda requires TRAVERSE_LIGHTPANDA_BINARY to point to an executable binary.');
         }
 
         if (! is_file($this->binary) || ! is_executable($this->binary)) {
-            throw new LightpandaBinaryNotFound(sprintf('Lightpanda binary [%s] does not exist or is not executable.', $this->binary));
+            throw new BinaryNotFoundException(sprintf('Lightpanda binary [%s] does not exist or is not executable.', $this->binary));
         }
 
         return $this->binary;
@@ -87,7 +87,7 @@ final class LightpandaProcess
     private function endpoint(): string
     {
         if ($this->port === null) {
-            throw new LightpandaProcessException('Lightpanda has not been started.');
+            throw new ProcessException('Lightpanda has not been started.');
         }
 
         return sprintf('ws://127.0.0.1:%d/', $this->port);
@@ -100,7 +100,7 @@ final class LightpandaProcess
         $socket = stream_socket_server('tcp://127.0.0.1:0', $errorCode, $errorMessage);
 
         if ($socket === false) {
-            throw new LightpandaProcessException(
+            throw new ProcessException(
                 sprintf('Could not allocate a local port for Lightpanda: %s', $errorMessage),
                 is_int($errorCode) ? $errorCode : 0,
             );
@@ -110,7 +110,7 @@ final class LightpandaProcess
         fclose($socket);
 
         if (! is_string($address) || ! str_contains($address, ':')) {
-            throw new LightpandaProcessException('Could not determine the local port allocated for Lightpanda.');
+            throw new ProcessException('Could not determine the local port allocated for Lightpanda.');
         }
 
         $port = filter_var(substr($address, strrpos($address, ':') + 1), FILTER_VALIDATE_INT, [
@@ -118,13 +118,13 @@ final class LightpandaProcess
         ]);
 
         if (! is_int($port)) {
-            throw new LightpandaProcessException('Could not determine a valid local port for Lightpanda.');
+            throw new ProcessException('Could not determine a valid local port for Lightpanda.');
         }
 
         return $port;
     }
 
-    private function processFailed(): LightpandaProcessException
+    private function processFailed(): ProcessException
     {
         $diagnostics = trim($this->process?->getErrorOutput() ?? '');
         $message = 'Lightpanda exited before its CDP server became available.';
@@ -135,6 +135,6 @@ final class LightpandaProcess
 
         $exitCode = $this->process?->getExitCode();
 
-        return new LightpandaProcessException($message, is_int($exitCode) ? $exitCode : 0);
+        return new ProcessException($message, is_int($exitCode) ? $exitCode : 0);
     }
 }

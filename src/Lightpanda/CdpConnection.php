@@ -8,9 +8,9 @@ use Amp\CancelledException;
 use Amp\TimeoutCancellation;
 use Amp\Websocket\Client\WebsocketConnection;
 use JsonException;
-use Tonyputi\Traverse\Exceptions\LightpandaProcessException;
-use Tonyputi\Traverse\Exceptions\LightpandaProtocolException;
-use Tonyputi\Traverse\Exceptions\LightpandaTimeoutException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\ProcessException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\ProtocolException;
+use Tonyputi\Traverse\Exceptions\Lightpanda\TimeoutException;
 
 use function Amp\Websocket\Client\connect;
 
@@ -28,9 +28,9 @@ final class CdpConnection
         try {
             return new self(connect($endpoint, new TimeoutCancellation($timeout)), $timeout);
         } catch (CancelledException $exception) {
-            throw new LightpandaTimeoutException('Timed out while connecting to the Lightpanda CDP server.', previous: $exception);
+            throw new TimeoutException('Timed out while connecting to the Lightpanda CDP server.', previous: $exception);
         } catch (\Throwable $exception) {
-            throw new LightpandaProcessException('Could not connect to the Lightpanda CDP server.', previous: $exception);
+            throw new ProcessException('Could not connect to the Lightpanda CDP server.', previous: $exception);
         }
     }
 
@@ -69,7 +69,7 @@ final class CdpConnection
                 $navigation = $this->result($response, 'Page.navigate');
 
                 if (isset($navigation['errorText']) && is_string($navigation['errorText'])) {
-                    throw new LightpandaProtocolException(sprintf('Lightpanda could not navigate to [%s]: %s', $url, $navigation['errorText']));
+                    throw new ProtocolException(sprintf('Lightpanda could not navigate to [%s]: %s', $url, $navigation['errorText']));
                 }
 
                 continue;
@@ -106,7 +106,7 @@ final class CdpConnection
         try {
             $this->connection->sendText(json_encode($request, JSON_THROW_ON_ERROR));
         } catch (JsonException $exception) {
-            throw new LightpandaProtocolException(sprintf('Could not encode the Lightpanda CDP command [%s].', $method), previous: $exception);
+            throw new ProtocolException(sprintf('Could not encode the Lightpanda CDP command [%s].', $method), previous: $exception);
         }
 
         return $request['id'];
@@ -120,21 +120,21 @@ final class CdpConnection
         try {
             $message = $this->connection->receive(new TimeoutCancellation($this->timeout));
         } catch (CancelledException $exception) {
-            throw new LightpandaTimeoutException('Timed out while waiting for a Lightpanda CDP response.', previous: $exception);
+            throw new TimeoutException('Timed out while waiting for a Lightpanda CDP response.', previous: $exception);
         }
 
         if ($message === null) {
-            throw new LightpandaProcessException('The Lightpanda CDP connection closed unexpectedly.');
+            throw new ProcessException('The Lightpanda CDP connection closed unexpectedly.');
         }
 
         try {
             $response = json_decode($message->buffer(), true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw new LightpandaProtocolException('Lightpanda returned an invalid CDP response.', previous: $exception);
+            throw new ProtocolException('Lightpanda returned an invalid CDP response.', previous: $exception);
         }
 
         if (! is_array($response)) {
-            throw new LightpandaProtocolException('Lightpanda returned an invalid CDP response shape.');
+            throw new ProtocolException('Lightpanda returned an invalid CDP response shape.');
         }
 
         return $response;
@@ -151,13 +151,13 @@ final class CdpConnection
                 ? $response['error']['message']
                 : 'Unknown CDP error.';
 
-            throw new LightpandaProtocolException(sprintf('Lightpanda rejected the CDP command [%s]: %s', $method, $message));
+            throw new ProtocolException(sprintf('Lightpanda rejected the CDP command [%s]: %s', $method, $message));
         }
 
         $result = $response['result'] ?? [];
 
         if (! is_array($result)) {
-            throw new LightpandaProtocolException(sprintf('Lightpanda returned an invalid result for the CDP command [%s].', $method));
+            throw new ProtocolException(sprintf('Lightpanda returned an invalid result for the CDP command [%s].', $method));
         }
 
         return $result;

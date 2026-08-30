@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tonyputi\Traverse\Exceptions;
+namespace Tonyputi\Traverse\Exceptions\Lightpanda;
 
 use RuntimeException;
 

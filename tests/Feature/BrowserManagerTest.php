@@ -6,7 +6,7 @@ use Tonyputi\Traverse\BrowserManager;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
 use Tonyputi\Traverse\Contracts\Page;
-use Tonyputi\Traverse\Exceptions\LightpandaBinaryNotFound;
+use Tonyputi\Traverse\Exceptions\Lightpanda\BinaryNotFoundException;
 use Tonyputi\Traverse\Lightpanda\LightpandaBrowser;
 
 it('binds the browser factory as a singleton', function (): void {
@@ -76,5 +76,5 @@ it('requires an externally managed Lightpanda binary when visiting a page', func
     config()->set('traverse.drivers.lightpanda.binary', null);
 
     expect(fn () => app(Factory::class)->browser('lightpanda')->visit('https://example.com'))
-        ->toThrow(LightpandaBinaryNotFound::class, 'TRAVERSE_LIGHTPANDA_BINARY');
+        ->toThrow(BinaryNotFoundException::class, 'TRAVERSE_LIGHTPANDA_BINARY');
 });
