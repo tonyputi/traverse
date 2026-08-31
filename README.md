@@ -96,6 +96,25 @@ public function tools(): iterable
 
 Attaching `traverse-read` grants the agent the same outbound network reachability as the application. It validates URL syntax but does not provide an SSRF guarantee across DNS resolution or redirects. Apply egress controls appropriate to your deployment before attaching it to an untrusted agent.
 
+### Laravel MCP
+
+Laravel MCP is optional. Install it when an application needs to expose Traverse to an external MCP client:
+
+```bash
+composer require laravel/mcp
+```
+
+Installing Traverse or using its Laravel AI tool does not enable an MCP server. Applications explicitly opt in, select a server transport, and own its authentication, authorization, middleware, and egress policy:
+
+```php
+use Laravel\Mcp\Facades\Mcp;
+use Tonyputi\Traverse\Mcp\TraverseServer;
+
+Mcp::local('traverse', TraverseServer::class);
+```
+
+`TraverseServer` is a convenience server that exposes only the read-only, open-world `traverse-read` tool. It does not register a route, command, transport, authentication flow, or authorization policy. Applications may instead add `Tonyputi\Traverse\Mcp\Tools\ReadPageTool` directly to an existing MCP server, or omit MCP entirely.
+
 Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
 
 There is no facade in V0.x; resolve `Contracts\Factory` via dependency injection. Custom drivers are registered with `BrowserManager::extend()`, as in Laravel's manager packages.
