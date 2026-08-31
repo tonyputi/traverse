@@ -24,8 +24,12 @@
         "illuminate/process": "^12.0",
         "illuminate/support": "^12.0"
     },
+    "suggest": {
+        "laravel/ai": "Required to use Traverse's Laravel AI tools."
+    },
     "require-dev": {
         "larastan/larastan": "^3.0",
+        "laravel/ai": "^0.11",
         "laravel/pint": "^1.24",
         "orchestra/testbench": "^10.0",
         "pestphp/pest": "^4.0",
