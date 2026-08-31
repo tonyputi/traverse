@@ -21,7 +21,7 @@ use Tonyputi\Traverse\ValueObjects\ReadPageRequest;
 use Tonyputi\Traverse\ValueObjects\ReadPageResponse;
 
 #[Name('traverse-read')]
-#[Description('Read one HTTP or HTTPS page as Markdown, a semantic tree, interactive elements, or structured data. This tool can access the same outbound network as the application.')]
+#[Description('Use this tool when you need the content of a specific HTTP or HTTPS URL. Traverse visits the page with the application\'s configured browser driver and returns Markdown, a semantic tree, interactive elements, or structured data. Do not use it to interact with a page, authenticate, submit data, or bypass the application\'s network policy.')]
 #[IsReadOnly]
 #[IsOpenWorld]
 final class ReadPageTool extends Tool

@@ -25,6 +25,9 @@ it('exposes a read-only open-world tool schema', function (): void {
                 'openWorldHint' => true,
             ],
         ])
+        ->and($tool->description())
+        ->toContain('Use this tool when')
+        ->toContain('network policy')
         ->and($tool->toArray()['inputSchema']['properties'])
         ->toHaveKeys(['url', 'format', 'max_characters']);
 });
@@ -98,7 +101,10 @@ it('does not expose driver diagnostics in structured failures', function (): voi
 it('exposes only the read tool from its ready-made server', function (): void {
     $server = app()->make(TraverseServer::class, ['transport' => new FakeTransporter]);
 
-    expect($server->createContext()->tools()->map->name()->all())->toBe(['traverse-read']);
+    expect($server->createContext()->tools()->map->name()->all())->toBe(['traverse-read'])
+        ->and($server->createContext()->instructions)
+        ->toContain('traverse-read')
+        ->toContain("application's outbound network access");
 });
 
 function mcpReadPageFactory(string $markdown = '# Traverse', ?Browser $browser = null): Factory

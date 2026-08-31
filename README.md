@@ -104,7 +104,7 @@ Laravel MCP is optional. Install it when an application needs to expose Traverse
 composer require laravel/mcp
 ```
 
-Applications explicitly select a server transport and own its authentication, authorization, middleware, and egress policy:
+Installing Traverse or using its Laravel AI tool does not enable an MCP server. Applications explicitly opt in, select a server transport, and own its authentication, authorization, middleware, and egress policy:
 
 ```php
 use Laravel\Mcp\Facades\Mcp;
@@ -113,7 +113,7 @@ use Tonyputi\Traverse\Mcp\TraverseServer;
 Mcp::local('traverse', TraverseServer::class);
 ```
 
-`TraverseServer` exposes only the read-only, open-world `traverse-read` tool. It does not register a route, command, transport, authentication flow, or authorization policy. For an existing MCP server, add `Tonyputi\Traverse\Mcp\Tools\ReadPageTool` directly to that server's tool list.
+`TraverseServer` is a convenience server that exposes only the read-only, open-world `traverse-read` tool. It does not register a route, command, transport, authentication flow, or authorization policy. Applications may instead add `Tonyputi\Traverse\Mcp\Tools\ReadPageTool` directly to an existing MCP server, or omit MCP entirely.
 
 Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
 
