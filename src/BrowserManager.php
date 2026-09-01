@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse;
 
+use Illuminate\Contracts\Cache\Factory as CacheFactory;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Process\Factory as ProcessFactory;
 use Illuminate\Support\Manager;
 use InvalidArgumentException;
 use LogicException;
+use Tonyputi\Traverse\Cache\CacheConfiguration;
+use Tonyputi\Traverse\Cache\CachedPageStore;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Factory;
+use Tonyputi\Traverse\Contracts\SupportsPageCache;
 use Tonyputi\Traverse\Lightpanda\Browser as LightpandaBrowser;
 use Tonyputi\Traverse\Lightpanda\Process as LightpandaProcess;
 
@@ -52,6 +56,7 @@ final class BrowserManager extends Manager implements Factory
             $browser,
             $driver,
             $this->container->make(Dispatcher::class),
+            $this->cacheStoreFor($driver, $browser),
         );
     }
 
@@ -62,6 +67,22 @@ final class BrowserManager extends Manager implements Factory
                 $driver->terminate();
             }
         }
+    }
+
+    private function cacheStoreFor(string $driver, Browser $browser): ?CachedPageStore
+    {
+        $configuration = CacheConfiguration::fromArray($this->config->get('traverse.cache'));
+
+        if (! $configuration->enabled || ! $browser instanceof SupportsPageCache) {
+            return null;
+        }
+
+        return new CachedPageStore(
+            $this->container->make(CacheFactory::class)->store($configuration->store),
+            $configuration,
+            $driver,
+            $browser->cacheVersion(),
+        );
     }
 
     protected function createLightpandaDriver(): Browser

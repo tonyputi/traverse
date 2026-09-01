@@ -6,6 +6,7 @@ namespace Tonyputi\Traverse;
 
 use Illuminate\Support\ServiceProvider;
 use Tonyputi\Traverse\Contracts\Factory;
+use Tonyputi\Traverse\Contracts\PageCache;
 
 final class TraverseServiceProvider extends ServiceProvider
 {
@@ -14,6 +15,7 @@ final class TraverseServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/traverse.php', 'traverse');
 
         $this->app->singleton(Factory::class, BrowserManager::class);
+        $this->app->singleton(PageCache::class, Cache\PageCacheService::class);
     }
 
     public function boot(): void
