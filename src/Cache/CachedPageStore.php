@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Tonyputi\Traverse\Cache;
 
 use Closure;
+use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Contracts\Cache\Repository;
+use Illuminate\Contracts\Cache\Repository as CacheRepository;
 use Tonyputi\Traverse\Contracts\Page;
 
 /**
@@ -19,7 +20,7 @@ use Tonyputi\Traverse\Contracts\Page;
 final readonly class CachedPageStore
 {
     public function __construct(
-        private Repository $repository,
+        private CacheRepository $repository,
         private CacheConfiguration $configuration,
         private string $driver,
         private string $cacheVersion,
@@ -53,16 +54,16 @@ final readonly class CachedPageStore
 
         $store = $this->repository->getStore();
 
-        if (! $store instanceof LockProvider) {
+        if (! $store instanceof LockProvider || ! $this->repository instanceof Repository) {
             return $this->visitAndStore($url, $visit);
         }
 
-        $lock = $store->lock($this->lockKey($url), $this->configuration->lockSeconds);
-
         try {
-            return $lock->block(
-                $this->configuration->lockWaitSeconds,
+            return $this->repository->withoutOverlapping(
+                $this->lockKey($url),
                 fn (): ServedPage => $this->visitAfterRecheck($url, $visit),
+                $this->configuration->lockSeconds,
+                $this->configuration->lockWaitSeconds,
             );
         } catch (LockTimeoutException) {
             return $this->visitAndStore($url, $visit);
