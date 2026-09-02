@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Str;
 use Throwable;
+use Tonyputi\Traverse\Cache\CachedPageStore;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Page;
 use Tonyputi\Traverse\Contracts\TerminableBrowser;
@@ -24,6 +25,7 @@ final class EventingBrowser implements Browser
         private readonly Browser $browser,
         private readonly string $driver,
         private readonly Dispatcher $events,
+        private readonly ?CachedPageStore $cache = null,
     ) {}
 
     public function visit(string $url): Page
@@ -35,7 +37,8 @@ final class EventingBrowser implements Browser
         $this->events->dispatch(new VisitStarted($invocationId, $url, $this->driver, $startedAt));
 
         try {
-            $page = $this->browser->visit($url);
+            $served = $this->cache?->visit($url, fn (): Page => $this->browser->visit($url))
+                ?? ['page' => $this->browser->visit($url), 'cacheHit' => false];
         } catch (Throwable $exception) {
             $this->events->dispatch(new VisitFailed(
                 $invocationId,
@@ -44,6 +47,7 @@ final class EventingBrowser implements Browser
                 new DateTimeImmutable,
                 $this->durationInMilliseconds($startedAtNanoseconds),
                 $exception::class,
+                false,
             ));
 
             throw $exception;
@@ -55,9 +59,10 @@ final class EventingBrowser implements Browser
             $this->driver,
             new DateTimeImmutable,
             $this->durationInMilliseconds($startedAtNanoseconds),
+            $served['cacheHit'],
         ));
 
-        return $page;
+        return $served['page'];
     }
 
     public function terminate(): void
@@ -65,6 +70,16 @@ final class EventingBrowser implements Browser
         if ($this->browser instanceof TerminableBrowser) {
             $this->browser->terminate();
         }
+    }
+
+    /**
+     * The undecorated driver this decorator wraps.
+     *
+     * @internal
+     */
+    public function unwrap(): Browser
+    {
+        return $this->browser;
     }
 
     private function durationInMilliseconds(int $startedAtNanoseconds): float

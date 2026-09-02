@@ -34,8 +34,10 @@ The V0.x surface is deliberately small:
 - `Tonyputi\Traverse\Contracts\Browser` — `visit(string $url): Page`
 - `Tonyputi\Traverse\Contracts\Page` — `markdown()`, `semanticTree()`, `interactiveElements()`, `structuredData()`
 - `Tonyputi\Traverse\Events\VisitStarted`, `VisitCompleted`, and `VisitFailed` — factory-resolved visit lifecycle events
+- `Tonyputi\Traverse\Contracts\SupportsPageCache` — opt-in driver capability: `cacheVersion(): string`
+- `Tonyputi\Traverse\Contracts\PageCache` — `forget(string $url, ?string $driver = null): bool` and `refresh(string $url, ?string $driver = null): Page`
 - `Tonyputi\Traverse\Ai\ReadPageTool` — optional Laravel AI `traverse-read` tool
-- `config/traverse.php` — `default`, `drivers.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
+- `config/traverse.php` — `default`, `drivers.*`, `cache.*` (publish via `php artisan vendor:publish --tag=traverse-config`)
 
 Configure the externally managed Lightpanda executable before visiting a page. Traverse supports Lightpanda `>= 0.3.7` and `< 0.4.0`:
 
@@ -72,6 +74,47 @@ Event::listen(VisitCompleted::class, function (VisitCompleted $visit): void {
 ```
 
 Completed events do not contain a `Page`, Markdown, semantic data, cookies, headers, or process objects. Traverse does not broadcast these events, select a channel, or configure a queue. Applications that need real-time updates should map only the appropriate event metadata to their own authorized broadcast event. Use a queued listener, including `ShouldQueueAfterCommit` where appropriate, when event work must not run during the visit.
+
+`VisitCompleted` and `VisitFailed` carry a `cacheHit` boolean. It is `true` only when the returned page came from Traverse's opt-in page cache.
+
+### Page caching (opt-in)
+
+Caching is disabled by default. When enabled, Traverse caches successful visits only, as validated JSON snapshots of the four page primitives, in your configured Laravel cache store. Failures, live browser or process objects, cookies, headers, credentials, and diagnostics are never cached. Cached entries survive JSON round trips and are reconstructed into `Contracts\Page` implementations.
+
+```dotenv
+TRAVERSE_CACHE_ENABLED=true
+TRAVERSE_CACHE_STORE=redis
+TRAVERSE_CACHE_TTL=300
+```
+
+```php
+// config/traverse.php
+'cache' => [
+    'enabled' => env('TRAVERSE_CACHE_ENABLED', false),
+    'store' => env('TRAVERSE_CACHE_STORE'), // null = Laravel's default cache store
+    'ttl' => (int) env('TRAVERSE_CACHE_TTL', 300),
+    'prefix' => 'traverse:pages:v1',
+    'lock_seconds' => 60,
+    'lock_wait_seconds' => 60,
+],
+```
+
+Only drivers that explicitly implement `Tonyputi\Traverse\Contracts\SupportsPageCache` are eligible, so caching never assumes a driver can produce comparable snapshots. The built-in Lightpanda driver implements it with the snapshot version `lightpanda-0.3`, which changes when cached snapshots must be invalidated. Cache keys are internal: they combine the configured prefix with a SHA-256 digest of the resolved driver, the driver's snapshot version, and a conservatively normalized URL (case-insensitive scheme and host, default ports and fragments removed). URLs containing userinfo bypass the cache. Raw URLs never appear in the cache store.
+
+A cache hit returns a reconstructed `Page` without starting Lightpanda or navigating again. Lifecycle events still fire exactly once per visit. On a miss with a lock-capable store (`Illuminate\Contracts\Cache\LockProvider`, such as Redis or the array store), Traverse protects identical concurrent visits with an atomic lock, re-checks the cache after acquiring it, and performs the visit at most once per lock window. If the lock cannot be acquired within `lock_wait_seconds`, the visit proceeds unlocked as best-effort stampede protection. Stores without lock support work normally, without that protection. Runtime cache-store failures degrade to a cache miss or skipped write; invalid configuration and unknown drivers still throw.
+
+Invalidate or refresh pages through the bound `Tonyputi\Traverse\Contracts\PageCache` service; never reverse-engineer cache keys:
+
+```php
+use Tonyputi\Traverse\Contracts\PageCache;
+
+app(PageCache::class)->forget('https://example.com/pricing');
+$page = app(PageCache::class)->refresh('https://example.com/pricing');
+```
+
+`forget()` returns `false` when caching is disabled, the driver is not cache-capable, the URL contains userinfo, or nothing was stored. It throws for an unknown driver or invalid cache configuration. `refresh()` invalidates the entry and returns a fresh page through the normal browser flow, which caches the new snapshot.
+
+Caching is intended for public, identical-request pages. Traverse cannot infer authentication or personalization from arbitrary URLs, query parameters, cookies, or application sessions; it only bypasses URLs containing userinfo. It does not read HTTP freshness headers or include request context in cache keys. Enable it only when your application limits visits to public pages, and only use a shared store (such as Redis) when that is appropriate for those URLs.
 
 ### Laravel AI tools
 
@@ -115,7 +158,7 @@ Mcp::local('traverse', TraverseServer::class);
 
 `TraverseServer` is a convenience server that exposes only the read-only, open-world `traverse-read` tool. It does not register a route, command, transport, authentication flow, or authorization policy. Applications may instead add `Tonyputi\Traverse\Mcp\Tools\ReadPageTool` directly to an existing MCP server, or omit MCP entirely.
 
-Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`.
+Environment variables: `TRAVERSE_DRIVER`, `TRAVERSE_LIGHTPANDA_BINARY`, `TRAVERSE_CACHE_ENABLED`, `TRAVERSE_CACHE_STORE`, `TRAVERSE_CACHE_TTL`.
 
 There is no facade in V0.x; resolve `Contracts\Factory` via dependency injection. Custom drivers are registered with `BrowserManager::extend()`, as in Laravel's manager packages.
 

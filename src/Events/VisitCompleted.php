@@ -14,5 +14,6 @@ final readonly class VisitCompleted
         public string $driver,
         public DateTimeImmutable $completedAt,
         public float $durationInMilliseconds,
+        public bool $cacheHit = false,
     ) {}
 }

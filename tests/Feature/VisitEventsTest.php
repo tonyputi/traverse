@@ -172,6 +172,7 @@ it('serializes visit event payloads without a page result', function (): void {
         'fake',
         new DateTimeImmutable,
         12.5,
+        true,
     );
     $failed = new VisitFailed(
         '019c9aee-1234-7000-8000-000000000000',
@@ -192,6 +193,7 @@ it('serializes visit event payloads without a page result', function (): void {
         ->and($restoredCompleted)
         ->toBeInstanceOf(VisitCompleted::class)
         ->durationInMilliseconds->toBe(12.5)
+        ->cacheHit->toBeTrue()
         ->and(get_object_vars($restoredCompleted))->not->toHaveKey('page')
         ->and($restoredFailed)
         ->toBeInstanceOf(VisitFailed::class)

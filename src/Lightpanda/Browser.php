@@ -5,16 +5,28 @@ declare(strict_types=1);
 namespace Tonyputi\Traverse\Lightpanda;
 
 use Tonyputi\Traverse\Contracts\Page as PageContract;
+use Tonyputi\Traverse\Contracts\SupportsPageCache;
 use Tonyputi\Traverse\Contracts\TerminableBrowser;
 use Tonyputi\Traverse\Exceptions\Lightpanda\ProtocolException;
 
-final class Browser implements TerminableBrowser
+final class Browser implements SupportsPageCache, TerminableBrowser
 {
     private const MINIMUM_VERSION = '0.3.7';
 
     private const NEXT_MINOR_VERSION = '0.4.0';
 
+    /**
+     * Snapshot compatibility for the supported Lightpanda range. Bump when
+     * cached snapshots must be invalidated across releases.
+     */
+    public const SNAPSHOT_CACHE_VERSION = 'lightpanda-0.3';
+
     public function __construct(private readonly Process $process) {}
+
+    public function cacheVersion(): string
+    {
+        return self::SNAPSHOT_CACHE_VERSION;
+    }
 
     public function visit(string $url): PageContract
     {

@@ -15,5 +15,6 @@ final readonly class VisitFailed
         public DateTimeImmutable $failedAt,
         public float $durationInMilliseconds,
         public string $exceptionClass,
+        public bool $cacheHit = false,
     ) {}
 }
