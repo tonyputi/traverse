@@ -35,7 +35,7 @@ Keys are internal. They combine the configured prefix with a SHA-256 digest of t
 
 The internal `EventingBrowser` decorator gains an optional `CachedPageStore` collaborator created by `BrowserManager` when caching is enabled and the driver is cache-capable. The full visit flow stays in one place: `VisitStarted` dispatches, then either a cached snapshot or at most one real visit produces a page, then exactly one terminal event dispatches. `VisitCompleted` and `VisitFailed` carry a scalar `cacheHit` boolean; failures always report `false`.
 
-On a miss with a store implementing `Illuminate\Contracts\Cache\LockProvider`, Traverse acquires an atomic lock, re-checks the cache after acquiring it, then visits and stores. `lock_wait_seconds` exhaustion degrades to an unlocked, best-effort visit instead of failing the caller. Stores without lock support work normally without stampede protection.
+On a miss with a store implementing `Illuminate\Contracts\Cache\LockProvider`, Traverse acquires an atomic lock, re-checks the cache after acquiring it, then visits and stores. `lock_wait_seconds` exhaustion degrades to an unlocked, best-effort visit instead of failing the caller. Stores without lock support work normally without stampede protection. Runtime cache-store failures likewise degrade to a miss or skipped write; invalid configuration still fails explicitly.
 
 Configuration lives under `traverse.cache` (`enabled`, `store`, `ttl`, `prefix`, `lock_seconds`, `lock_wait_seconds`) and is validated when enabled; missing keys fall back to safe defaults because `mergeConfigFrom` only merges top-level keys. `illuminate/cache` becomes a direct dependency.
 

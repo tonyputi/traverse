@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Cache\Repository;
+use Illuminate\Contracts\Cache\Store;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
@@ -237,6 +238,26 @@ it('never caches failed visits', function (): void {
     $failed = Event::dispatched(VisitFailed::class)->sole()[0];
 
     expect($failed->cacheHit)->toBeFalse();
+});
+
+it('treats cache store failures as misses', function (): void {
+    $store = Mockery::mock(Store::class);
+    $store->shouldReceive('get')->andThrow(new RuntimeException('Cache read failed.'));
+    $store->shouldReceive('put')->andThrow(new RuntimeException('Cache write failed.'));
+
+    Cache::extend('failing', fn (): Repository => new Repository($store));
+    config()->set('cache.stores.failing', ['driver' => 'failing']);
+    enablePageCache(['store' => 'failing']);
+
+    $browser = new CountingBrowser;
+    $factory = cachedBrowser($browser);
+
+    $first = $factory->browser('cached')->visit(CACHE_URL);
+    $second = $factory->browser('cached')->visit(CACHE_URL);
+
+    expect($browser->visits)->toBe(2)
+        ->and($first->markdown())->toBe('# Counted #1')
+        ->and($second->markdown())->toBe('# Counted #2');
 });
 
 it('ignores drivers without the cache capability', function (): void {

@@ -7,6 +7,7 @@ namespace Tonyputi\Traverse\Cache;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Cache\Repository;
+use Throwable;
 use Tonyputi\Traverse\Contracts\Page;
 
 /**
@@ -30,7 +31,11 @@ final readonly class CachedPageStore
             return null;
         }
 
-        $snapshot = $this->repository->get($this->entryKey($url));
+        try {
+            $snapshot = $this->repository->get($this->entryKey($url));
+        } catch (Throwable) {
+            return null;
+        }
 
         if (! is_string($snapshot)) {
             return null;
@@ -55,20 +60,46 @@ final readonly class CachedPageStore
             return ['page' => $cached, 'cacheHit' => true];
         }
 
-        $store = $this->repository->getStore();
+        try {
+            $store = $this->repository->getStore();
+        } catch (Throwable) {
+            return $this->visitAndStore($url, $visit);
+        }
 
         if (! $store instanceof LockProvider) {
             return $this->visitAndStore($url, $visit);
         }
 
-        $lock = $store->lock($this->lockKey($url), $this->configuration->lockSeconds);
+        try {
+            $lock = $store->lock($this->lockKey($url), $this->configuration->lockSeconds);
+        } catch (Throwable) {
+            return $this->visitAndStore($url, $visit);
+        }
+
+        /** @var array{page: Page, cacheHit: bool}|null $served */
+        $served = null;
+        $callbackStarted = false;
 
         try {
             return $lock->block(
                 $this->configuration->lockWaitSeconds,
-                fn (): array => $this->visitAfterRecheck($url, $visit),
+                function () use ($url, $visit, &$served, &$callbackStarted): array {
+                    $callbackStarted = true;
+
+                    return $served = $this->visitAfterRecheck($url, $visit);
+                },
             );
         } catch (LockTimeoutException) {
+            return $served ?? $this->visitAndStore($url, $visit);
+        } catch (Throwable $exception) {
+            if ($served !== null) {
+                return $served;
+            }
+
+            if ($callbackStarted) {
+                throw $exception;
+            }
+
             return $this->visitAndStore($url, $visit);
         }
     }
@@ -79,7 +110,11 @@ final readonly class CachedPageStore
             return false;
         }
 
-        return $this->repository->forget($this->entryKey($url));
+        try {
+            return $this->repository->forget($this->entryKey($url));
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -126,7 +161,11 @@ final readonly class CachedPageStore
             return;
         }
 
-        $this->repository->put($this->entryKey($url), $snapshot, $this->configuration->ttl);
+        try {
+            $this->repository->put($this->entryKey($url), $snapshot, $this->configuration->ttl);
+        } catch (Throwable) {
+            // Cache writes must not turn a successful visit into a failure.
+        }
     }
 
     private function entryKey(string $url): string
