@@ -29,7 +29,7 @@ interface SupportsPageCache
 
 Successful pages are stored as validated JSON snapshots of the four read primitives (`markdown`, `semanticTree`, `interactiveElements`, `structuredData`) through an internal `CachedPage` value object that also implements `Contracts\Page` for reconstruction. Capture failures mean the page is not cached; restore failures are treated as cache misses. Nothing else is persisted: no live browser, process, or CDP objects, no exceptions, cookies, headers, credentials, or diagnostics.
 
-Keys are internal. They combine the configured prefix with a SHA-256 digest of the resolved driver name, the driver snapshot version, and a conservatively normalized URL (case-insensitive scheme and host, default ports and fragments removed, query preserved verbatim). Raw URLs never appear in the cache store, and consumers use the bound `Contracts\PageCache` service (`forget()` / `refresh()`) instead of cache keys.
+Keys are internal. They combine the configured prefix with a SHA-256 digest of the resolved driver name, the driver snapshot version, and a conservatively normalized URL (case-insensitive scheme and host, default ports and fragments removed, query preserved verbatim). URLs containing userinfo bypass the cache. Raw URLs never appear in the cache store, and consumers use the bound `Contracts\PageCache` service (`forget()` / `refresh()`) instead of cache keys.
 
 ### Visit integration
 
@@ -43,7 +43,7 @@ Configuration lives under `traverse.cache` (`enabled`, `store`, `ttl`, `prefix`,
 
 - Issue #20 can build queued visits on a durable, JSON-round-trippable result store with deterministic idempotency semantics.
 - Applications keep full ownership of store selection, TTL policy, and shared-cache risk for the URLs they visit.
-- Traverse still does not interpret HTTP freshness headers, cache authenticated or personalized content, or include request context in cache keys.
+- Traverse does not interpret HTTP freshness headers or include request context in cache keys. Applications must enable caching only for public, identical-request pages; URL userinfo is the one authentication signal Traverse can detect and bypasses.
 
 ## Sources
 

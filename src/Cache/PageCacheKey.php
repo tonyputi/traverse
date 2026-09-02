@@ -12,6 +12,13 @@ namespace Tonyputi\Traverse\Cache;
  */
 final class PageCacheKey
 {
+    public static function hasUserInfo(string $url): bool
+    {
+        $parts = parse_url(trim($url));
+
+        return is_array($parts) && (isset($parts['user']) || isset($parts['pass']));
+    }
+
     public static function entry(string $prefix, string $driver, string $cacheVersion, string $url): string
     {
         return $prefix.':'.self::digest($driver, $cacheVersion, $url);

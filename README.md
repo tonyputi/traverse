@@ -99,7 +99,7 @@ TRAVERSE_CACHE_TTL=300
 ],
 ```
 
-Only drivers that explicitly implement `Tonyputi\Traverse\Contracts\SupportsPageCache` are eligible, so caching never assumes a driver can produce comparable snapshots. The built-in Lightpanda driver implements it with the snapshot version `lightpanda-0.3`, which changes when cached snapshots must be invalidated. Cache keys are internal: they combine the configured prefix with a SHA-256 digest of the resolved driver, the driver's snapshot version, and a conservatively normalized URL (case-insensitive scheme and host, default ports and fragments removed). Raw URLs never appear in the cache store.
+Only drivers that explicitly implement `Tonyputi\Traverse\Contracts\SupportsPageCache` are eligible, so caching never assumes a driver can produce comparable snapshots. The built-in Lightpanda driver implements it with the snapshot version `lightpanda-0.3`, which changes when cached snapshots must be invalidated. Cache keys are internal: they combine the configured prefix with a SHA-256 digest of the resolved driver, the driver's snapshot version, and a conservatively normalized URL (case-insensitive scheme and host, default ports and fragments removed). URLs containing userinfo bypass the cache. Raw URLs never appear in the cache store.
 
 A cache hit returns a reconstructed `Page` without starting Lightpanda or navigating again. Lifecycle events still fire exactly once per visit. On a miss with a lock-capable store (`Illuminate\Contracts\Cache\LockProvider`, such as Redis or the array store), Traverse protects identical concurrent visits with an atomic lock, re-checks the cache after acquiring it, and performs the visit at most once per lock window. If the lock cannot be acquired within `lock_wait_seconds`, the visit proceeds unlocked as best-effort stampede protection. Stores without lock support work normally, without that protection.
 
@@ -112,9 +112,9 @@ app(PageCache::class)->forget('https://example.com/pricing');
 $page = app(PageCache::class)->refresh('https://example.com/pricing');
 ```
 
-`forget()` returns `false` when caching is disabled, the driver is not cache-capable, or nothing was stored. `refresh()` invalidates the entry and returns a fresh page through the normal browser flow, which caches the new snapshot.
+`forget()` returns `false` when caching is disabled, the driver is not cache-capable, the URL contains userinfo, or nothing was stored. It throws for an unknown driver or invalid cache configuration. `refresh()` invalidates the entry and returns a fresh page through the normal browser flow, which caches the new snapshot.
 
-Caching is intended for public, identical-request pages. Traverse does not read HTTP freshness headers, does not cache authenticated or personalized content, and does not include request context in cache keys. Only point the cache store at a shared store (such as Redis) when that is acceptable for your URLs, and keep per-user URLs out of the cache.
+Caching is intended for public, identical-request pages. Traverse cannot infer authentication or personalization from arbitrary URLs, query parameters, cookies, or application sessions; it only bypasses URLs containing userinfo. It does not read HTTP freshness headers or include request context in cache keys. Enable it only when your application limits visits to public pages, and only use a shared store (such as Redis) when that is appropriate for those URLs.
 
 ### Laravel AI tools
 

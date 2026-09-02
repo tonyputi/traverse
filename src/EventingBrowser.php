@@ -9,7 +9,6 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Str;
 use Throwable;
 use Tonyputi\Traverse\Cache\CachedPageStore;
-use Tonyputi\Traverse\Cache\ServedPage;
 use Tonyputi\Traverse\Contracts\Browser;
 use Tonyputi\Traverse\Contracts\Page;
 use Tonyputi\Traverse\Contracts\TerminableBrowser;
@@ -39,7 +38,7 @@ final class EventingBrowser implements Browser
 
         try {
             $served = $this->cache?->visit($url, fn (): Page => $this->browser->visit($url))
-                ?? new ServedPage($this->browser->visit($url), false);
+                ?? ['page' => $this->browser->visit($url), 'cacheHit' => false];
         } catch (Throwable $exception) {
             $this->events->dispatch(new VisitFailed(
                 $invocationId,
@@ -60,10 +59,10 @@ final class EventingBrowser implements Browser
             $this->driver,
             new DateTimeImmutable,
             $this->durationInMilliseconds($startedAtNanoseconds),
-            $served->fromCache,
+            $served['cacheHit'],
         ));
 
-        return $served->page;
+        return $served['page'];
     }
 
     public function terminate(): void

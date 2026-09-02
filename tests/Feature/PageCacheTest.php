@@ -143,6 +143,20 @@ it('normalizes urls before digesting them', function (): void {
         ->and(str_contains($entry(CACHE_URL), 'example.test'))->toBeFalse();
 });
 
+it('bypasses cache for urls containing userinfo', function (): void {
+    enablePageCache();
+
+    $browser = new CountingBrowser;
+    $factory = cachedBrowser($browser);
+    $url = 'https://alice:secret@example.test/docs';
+
+    $factory->browser('cached')->visit($url);
+    $factory->browser('cached')->visit($url);
+
+    expect($browser->visits)->toBe(2)
+        ->and(app(PageCache::class)->forget($url, 'cached'))->toBeFalse();
+});
+
 it('respects the configured ttl', function (): void {
     enablePageCache(['ttl' => 120]);
 
@@ -183,7 +197,8 @@ it('forgets a cached page for an explicit driver', function (): void {
     $factory->browser('cached')->visit(CACHE_URL);
 
     expect(app(PageCache::class)->forget(CACHE_URL, 'cached'))->toBeTrue()
-        ->and(app(PageCache::class)->forget(CACHE_URL, 'other'))->toBeFalse();
+        ->and(fn (): bool => app(PageCache::class)->forget(CACHE_URL, 'other'))
+        ->toThrow(InvalidArgumentException::class, 'Driver [other] not supported.');
 });
 
 it('refreshes a page and caches the fresh snapshot', function (): void {
@@ -346,6 +361,8 @@ it('validates cache configuration', function (): void {
     cachedBrowser(new CountingBrowser);
 
     expect(fn (): Browser => app(Factory::class)->browser('cached'))
+        ->toThrow(InvalidArgumentException::class, 'Traverse cache [ttl] configuration must be a positive integer.')
+        ->and(fn (): bool => app(PageCache::class)->forget(CACHE_URL, 'cached'))
         ->toThrow(InvalidArgumentException::class, 'Traverse cache [ttl] configuration must be a positive integer.');
 });
 

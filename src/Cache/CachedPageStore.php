@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace Tonyputi\Traverse\Cache;
 
-use Closure;
-use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Contracts\Cache\Repository as CacheRepository;
+use Illuminate\Contracts\Cache\Repository;
 use Tonyputi\Traverse\Contracts\Page;
 
 /**
@@ -20,7 +18,7 @@ use Tonyputi\Traverse\Contracts\Page;
 final readonly class CachedPageStore
 {
     public function __construct(
-        private CacheRepository $repository,
+        private Repository $repository,
         private CacheConfiguration $configuration,
         private string $driver,
         private string $cacheVersion,
@@ -28,6 +26,10 @@ final readonly class CachedPageStore
 
     public function get(string $url): ?Page
     {
+        if (PageCacheKey::hasUserInfo($url)) {
+            return null;
+        }
+
         $snapshot = $this->repository->get($this->entryKey($url));
 
         if (! is_string($snapshot)) {
@@ -38,32 +40,33 @@ final readonly class CachedPageStore
     }
 
     /**
-     * Serve a cached page or perform the visit at most once, protected by an
-     * atomic lock when the underlying store supports locks. Stores without
-     * lock support still work, without stampede protection.
-     *
      * @param  (callable(): Page)  $visit
+     * @return array{page: Page, cacheHit: bool}
      */
-    public function visit(string $url, callable $visit): ServedPage
+    public function visit(string $url, callable $visit): array
     {
+        if (PageCacheKey::hasUserInfo($url)) {
+            return $this->visitWithoutCache($visit);
+        }
+
         $cached = $this->get($url);
 
         if ($cached !== null) {
-            return new ServedPage($cached, true);
+            return ['page' => $cached, 'cacheHit' => true];
         }
 
         $store = $this->repository->getStore();
 
-        if (! $store instanceof LockProvider || ! $this->repository instanceof Repository) {
+        if (! $store instanceof LockProvider) {
             return $this->visitAndStore($url, $visit);
         }
 
+        $lock = $store->lock($this->lockKey($url), $this->configuration->lockSeconds);
+
         try {
-            return $this->repository->withoutOverlapping(
-                $this->lockKey($url),
-                fn (): ServedPage => $this->visitAfterRecheck($url, $visit),
-                $this->configuration->lockSeconds,
+            return $lock->block(
                 $this->configuration->lockWaitSeconds,
+                fn (): array => $this->visitAfterRecheck($url, $visit),
             );
         } catch (LockTimeoutException) {
             return $this->visitAndStore($url, $visit);
@@ -72,18 +75,23 @@ final readonly class CachedPageStore
 
     public function forget(string $url): bool
     {
+        if (PageCacheKey::hasUserInfo($url)) {
+            return false;
+        }
+
         return $this->repository->forget($this->entryKey($url));
     }
 
     /**
      * @param  (callable(): Page)  $visit
+     * @return array{page: Page, cacheHit: bool}
      */
-    private function visitAfterRecheck(string $url, callable $visit): ServedPage
+    private function visitAfterRecheck(string $url, callable $visit): array
     {
         $cached = $this->get($url);
 
         if ($cached !== null) {
-            return new ServedPage($cached, true);
+            return ['page' => $cached, 'cacheHit' => true];
         }
 
         return $this->visitAndStore($url, $visit);
@@ -91,14 +99,23 @@ final readonly class CachedPageStore
 
     /**
      * @param  (callable(): Page)  $visit
+     * @return array{page: Page, cacheHit: false}
      */
-    private function visitAndStore(string $url, callable $visit): ServedPage
+    private function visitAndStore(string $url, callable $visit): array
     {
-        $visit = Closure::fromCallable($visit);
         $page = $visit();
         $this->put($url, $page);
 
-        return new ServedPage($page, false);
+        return ['page' => $page, 'cacheHit' => false];
+    }
+
+    /**
+     * @param  (callable(): Page)  $visit
+     * @return array{page: Page, cacheHit: false}
+     */
+    private function visitWithoutCache(callable $visit): array
+    {
+        return ['page' => $visit(), 'cacheHit' => false];
     }
 
     private function put(string $url, Page $page): void

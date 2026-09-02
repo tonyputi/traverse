@@ -23,11 +23,7 @@ final class PageCacheService implements PageCache
 
     public function forget(string $url, ?string $driver = null): bool
     {
-        try {
-            return $this->storeFor($driver ?? $this->defaultDriver())?->forget($url) ?? false;
-        } catch (InvalidArgumentException) {
-            return false;
-        }
+        return $this->storeFor($driver ?? $this->defaultDriver())?->forget($url) ?? false;
     }
 
     public function refresh(string $url, ?string $driver = null): Page

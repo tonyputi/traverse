@@ -8,12 +8,7 @@ use JsonException;
 use Tonyputi\Traverse\Contracts\Page;
 
 /**
- * A JSON-serializable snapshot of a page's four read primitives.
- *
- * Values that cannot be JSON-encoded fail capture and the page is not
- * cached. Restoring rejects invalid JSON or shape-mismatched payloads, so
- * corrupt entries become cache misses. Note that non-JSON-native values
- * (objects) that do encode are decoded lossily into arrays.
+ * A JSON snapshot of a page's four read primitives.
  *
  * @internal
  */

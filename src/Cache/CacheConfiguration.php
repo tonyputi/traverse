@@ -38,7 +38,11 @@ final readonly class CacheConfiguration
             throw new InvalidArgumentException('Traverse cache configuration must be an array.');
         }
 
-        $enabled = self::boolean($config['enabled'] ?? false, 'enabled');
+        $enabled = $config['enabled'] ?? false;
+
+        if (! is_bool($enabled)) {
+            throw new InvalidArgumentException('Traverse cache [enabled] configuration must be a boolean.');
+        }
 
         if (! $enabled) {
             return new self(false, null, self::DEFAULT_TTL, self::DEFAULT_PREFIX, self::DEFAULT_LOCK_SECONDS, self::DEFAULT_LOCK_WAIT_SECONDS);
@@ -58,31 +62,6 @@ final readonly class CacheConfiguration
             self::positiveInteger($config['lock_seconds'] ?? self::DEFAULT_LOCK_SECONDS, 'lock_seconds'),
             self::positiveInteger($config['lock_wait_seconds'] ?? self::DEFAULT_LOCK_WAIT_SECONDS, 'lock_wait_seconds'),
         );
-    }
-
-    private static function boolean(mixed $value, string $key): bool
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if ($value === null) {
-            return false;
-        }
-
-        if (is_int($value) && ($value === 0 || $value === 1)) {
-            return $value === 1;
-        }
-
-        if (is_string($value)) {
-            $normalized = filter_var($value, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE);
-
-            if ($normalized !== null) {
-                return $normalized;
-            }
-        }
-
-        throw new InvalidArgumentException(sprintf('Traverse cache [%s] configuration must be a boolean.', $key));
     }
 
     private static function positiveInteger(mixed $value, string $key): int
