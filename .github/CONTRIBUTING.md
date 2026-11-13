@@ -38,6 +38,82 @@ composer test
 Use `composer format` to apply Pint fixes. Add regression coverage for bugs and package
 integration coverage for Laravel-facing behavior.
 
+## Protected PRs and dependency updates
+
+`main` is the policy target. `.github/CODEOWNERS` assigns every file, including
+CODEOWNERS itself and all automation, to the human maintainer `@tonyputi`.
+Repository settings and the active ruleset are managed in
+[Terraform](https://github.com/tonyputi/terraform/issues/109), not by workflows here.
+The ruleset must require a PR, one CODEOWNER approval, dismissal of stale approvals
+on new commits, resolved review threads, and no bypass actors. Bots and AI must
+never approve PRs. An operator-authored PR cannot be self-approved: use a separate
+App identity for agent-authored PRs, or agree another eligible human CODEOWNER.
+
+Quality runs on every PR, without path filters, secrets, or write permissions,
+including Dependabot and fork PRs. Require these exact contexts from the
+`github-actions` App (integration ID `15368`):
+
+- `Validate Composer`
+- `Lint`
+- `Analyse`
+- `Test (PHP 8.3)`
+- `Test (PHP 8.4)`
+
+Do not require `release`, Dependabot's internal checks, or the auto-merge workflow.
+Release runs after a merge to `main`; `.releaserc` uses only commit analysis,
+release notes, and GitHub publication. It does not use `@semantic-release/git` or
+write release commits back to `main`. No release-bot protection bypass is needed.
+
+Dependabot checks Composer and Actions weekly, with a five-day version-update
+cooldown and at most five open version-update PRs per ecosystem. Minor/patch
+version updates are grouped; majors and security updates remain individual.
+Production Composer updates use `fix(deps)` so they can trigger a package release;
+development dependencies and Actions use `chore` conventions. Cooldown does not
+delay security updates, which have GitHub's separate ten-PR limit.
+
+### Dormant auto-merge queue
+
+The queue runs only when the Actions repository variable
+`DEPENDABOT_AUTO_MERGE_ENABLED` equals the exact string `true`. Absent or any other
+value means disabled. Terraform enabling native auto-merge does **not** activate
+this workflow. Ordinary PRs remain explicit maintainer opt-in.
+
+The metadata-only `workflow_run` trigger follows successful Quality PR runs and
+avoids Dependabot's restricted PR token/secrets. It queries GitHub for the current
+PR and verifies Dependabot's bot identity, both repositories, base `main`, head
+branch, and tested commit. It never checks out code, downloads artifacts, restores
+caches, or executes PR content. The merge request also matches the tested head SHA.
+Native auto-merge waits for the independent required-check and human-review gates;
+new commits dismiss approval and need renewed human review.
+
+The built-in token is read-only. Queuing uses a dedicated GitHub App installed only
+on Traverse with Contents write, Pull requests write, and implicit Metadata read;
+no administration/bypass rights or PAT. Configure the Actions variable
+`DEPENDABOT_QUEUE_APP_CLIENT_ID` and secret `DEPENDABOT_QUEUE_APP_PRIVATE_KEY`
+separately after operator authorization. The pinned token action requests only this
+repository and those two write permissions, and revokes the token after the job.
+Do not use a broad multi-repository App private key. The App token preserves the
+existing push-triggered release; merges performed with `GITHUB_TOKEN` can suppress
+subsequent workflows. Do not silently fall back to it or broaden App permissions.
+
+Safe rollout order:
+
+1. Independently verify the activation variable is absent/false, then land the
+   reviewed repository files with all five Quality checks green.
+2. Review the Terraform PR, authorize its normal CI apply separately, and verify
+   effective `main` protections, required check App IDs, no bypasses, and native
+   auto-merge. A plan or `allow_auto_merge` alone is not evidence of protection.
+3. Complete the credential and negative/positive gate checks in
+   [#28](https://github.com/tonyputi/traverse/issues/28), coordinated with
+   [Terraform #110](https://github.com/tonyputi/terraform/issues/110). Only then authorize setting
+   the activation variable to `true`. Rerun Quality to queue an existing eligible
+   Dependabot PR; verify approval, auto-merge, and the subsequent Release run.
+
+The flag is an operator-controlled rollout latch, not a live protection monitor.
+Before weakening protections, disable it **and** cancel pending native auto-merge
+requests; disabling the workflow does not cancel already queued PRs. No live
+settings changes, applies, merges, or credential provisioning are implicit here.
+
 ## Language
 
 Repository-facing content—including issues, pull requests, commit messages, code
