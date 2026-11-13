@@ -38,6 +38,30 @@ composer test
 Use `composer format` to apply Pint fixes. Add regression coverage for bugs and package
 integration coverage for Laravel-facing behavior.
 
+## Protected PRs and dependency updates
+
+Repository settings and the active `main` ruleset are managed in
+[Terraform](https://github.com/tonyputi/terraform/pull/111).
+Changes require one human CODEOWNER approval from `@tonyputi`, passing up-to-date
+Quality checks, and resolved review threads. New commits dismiss stale approvals;
+no bypass actors are configured. A PR author cannot approve their own PR.
+
+Required checks from GitHub Actions App `15368` are `Validate Composer`, `Lint`,
+`Analyse`, `Test (PHP 8.3)` and `Test (PHP 8.4)`.
+Quality runs on PRs without path filters, secrets or write permissions.
+Release runs after merge and must not be required as a PR check. It publishes
+tags/releases without writing commits back to the protected branch.
+
+Dependabot checks Composer and Actions weekly, with a five-day cooldown and at
+most five open version-update PRs per ecosystem. Minor/patch updates are grouped;
+major and security updates remain individual. Composer production updates use
+`fix(deps)`; development dependencies and Actions use `chore` conventions.
+
+Native auto-merge is allowed but must be enabled separately on each PR by a
+maintainer. GitHub then waits for the required reviews and checks. There is no
+automatic queue, reusable merge workflow, dedicated merge App or activation flag.
+Bots and AI must not replace human approval.
+
 ## Language
 
 Repository-facing content—including issues, pull requests, commit messages, code

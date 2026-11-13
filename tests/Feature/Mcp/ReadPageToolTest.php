@@ -18,12 +18,11 @@ it('exposes a read-only open-world tool schema', function (): void {
     $tool = app(ReadPageTool::class);
 
     expect($tool->toArray())
+        ->toMatchArray(['name' => 'traverse-read'])
+        ->and($tool->toArray()['annotations'])
         ->toMatchArray([
-            'name' => 'traverse-read',
-            'annotations' => [
-                'readOnlyHint' => true,
-                'openWorldHint' => true,
-            ],
+            'readOnlyHint' => true,
+            'openWorldHint' => true,
         ])
         ->and($tool->description())
         ->toContain('Use this tool when')
