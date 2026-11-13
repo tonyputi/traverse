@@ -78,32 +78,36 @@ The queue runs only when the Actions repository variable
 value means disabled. Terraform enabling native auto-merge does **not** activate
 this workflow. Ordinary PRs remain explicit maintainer opt-in.
 
-The metadata-only `workflow_run` trigger follows successful Quality PR runs and
-avoids Dependabot's restricted PR token/secrets. It queries GitHub for the current
-PR and verifies Dependabot's bot identity, both repositories, base `main`, head
-branch, and tested commit. It never checks out code, downloads artifacts, restores
-caches, or executes PR content. The merge request also matches the tested head SHA.
-Native auto-merge waits for the independent required-check and human-review gates;
-new commits dismiss approval and need renewed human review.
+Traverse keeps only a small `workflow_run` caller pinned to a full commit SHA of
+[`tonyputi/.github`'s shared queue](https://github.com/tonyputi/.github#queue-dependabot).
+Detailed metadata verification, exact activation, security checks and merge behavior
+belong there, not in each consumer. Its only input is
+`validation_workflow: .github/workflows/quality.yml`; repository, owner, default
+branch and variables come from Traverse's caller context.
 
-The built-in token is read-only. Queuing uses a dedicated GitHub App installed only
-on Traverse with Contents write, Pull requests write, and implicit Metadata read;
-no administration/bypass rights or PAT. Configure the Actions variable
-`DEPENDABOT_QUEUE_APP_CLIENT_ID` and secret `DEPENDABOT_QUEUE_APP_PRIVATE_KEY`
-separately after operator authorization. The pinned token action requests only this
-repository and those two write permissions, and revokes the token after the job.
-Do not use a broad multi-repository App private key. The App token preserves the
-existing push-triggered release; merges performed with `GITHUB_TOKEN` can suppress
-subsequent workflows. Do not silently fall back to it or broaden App permissions.
+The caller grants Contents read + Pull requests read and explicitly maps its
+`DEPENDABOT_QUEUE_APP_PRIVATE_KEY` secret to the shared workflow_call secret
+`github_app_private_key`. It does not use `secrets: inherit` or shared-repository
+secrets. Configure the caller variable `DEPENDABOT_QUEUE_APP_CLIENT_ID` separately.
+Missing client ID or private key safely skips before API/token/merge operations.
+The dedicated App must be installed only on Traverse with Contents/Pull requests
+write, implicit Metadata read and no admin/bypass rights. There is no broad PAT or
+`GITHUB_TOKEN` merge fallback: the App preserves the existing release push trigger.
+Required checks, human CODEOWNER approval and stale dismissal remain independent
+gates; bot/AI reviews never replace human approval.
 
 Safe rollout order:
 
-1. Independently verify the activation variable is absent/false, then land the
-   reviewed repository files with all five Quality checks green.
-2. Review the Terraform PR, authorize its normal CI apply separately, and verify
+1. Human-review/merge the [shared PR](https://github.com/tonyputi/.github/pull/18)
+   first. Confirm the caller's pin is the final reviewed/merged shared revision;
+   update it if squash changes the SHA. An unmerged feature pin is not final evidence.
+2. Independently verify the activation variable is absent/false, then land the
+   reviewed Traverse caller with all five Quality checks green. The existing 403
+   when inspecting variables/secrets makes independent confirmation mandatory.
+3. Review the Terraform PR, authorize its normal CI apply separately, and verify
    effective `main` protections, required check App IDs, no bypasses, and native
    auto-merge. A plan or `allow_auto_merge` alone is not evidence of protection.
-3. Complete the credential and negative/positive gate checks in
+4. Complete the credential and negative/positive gate checks in
    [#28](https://github.com/tonyputi/traverse/issues/28), coordinated with
    [Terraform #110](https://github.com/tonyputi/terraform/issues/110). Only then authorize setting
    the activation variable to `true`. Rerun Quality to queue an existing eligible
